@@ -531,5 +531,47 @@ describe("EncryptedHabitMoodTracker", function () {
     // Recent average (9/2 = 4.5) should be higher than earlier average (4/2 = 2)
     // This indicates stress reduction (mood improvement)
   });
+
+  it("should handle edge case with single record for trend analysis", async function () {
+    const mood = 3;
+    const habit = 75;
+
+    const encryptedMood = await fhevm.createEncryptedNumber(mood, contractAddress);
+    const encryptedHabit = await fhevm.createEncryptedNumber(habit, contractAddress);
+
+    await contract.connect(signers.alice).addDailyRecord(
+      encryptedMood.handles[0],
+      encryptedHabit.handles[0],
+      encryptedMood.inputProof,
+      encryptedHabit.inputProof
+    );
+
+    // Should revert when trying trend analysis with single record
+    await expect(
+      contract.getStressReductionTrend(signers.alice.address, 5)
+    ).to.be.revertedWith("Need at least 2 records for trend analysis");
+  });
+
+  it("should validate record existence correctly", async function () {
+    // Check non-existent record
+    expect(await contract.recordExists(signers.alice.address, 0)).to.be.false;
+
+    // Add a record
+    const mood = 4;
+    const habit = 80;
+    const encryptedMood = await fhevm.createEncryptedNumber(mood, contractAddress);
+    const encryptedHabit = await fhevm.createEncryptedNumber(habit, contractAddress);
+
+    await contract.connect(signers.alice).addDailyRecord(
+      encryptedMood.handles[0],
+      encryptedHabit.handles[0],
+      encryptedMood.inputProof,
+      encryptedHabit.inputProof
+    );
+
+    // Now record should exist
+    expect(await contract.recordExists(signers.alice.address, 0)).to.be.true;
+    expect(await contract.recordExists(signers.alice.address, 1)).to.be.false;
+  });
 });
 
