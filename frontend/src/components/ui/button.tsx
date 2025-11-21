@@ -17,6 +17,9 @@ const buttonVariants = cva(
         success: "bg-green-600 text-white hover:bg-green-700 focus:ring-green-500",
         warning: "bg-yellow-500 text-white hover:bg-yellow-600 focus:ring-yellow-500",
         info: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
+        // Enhanced variants for habit tracking application
+        primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
+        accent: "bg-purple-600 text-white hover:bg-purple-700 focus:ring-purple-500",
       },
       size: {
         default: "h-10 px-4 py-2",
