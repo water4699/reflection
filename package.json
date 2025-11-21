@@ -81,7 +81,10 @@
     "deploy:local": "hardhat deploy --network hardhat",
     "deploy:sepolia": "hardhat deploy --network sepolia",
     "verify:sepolia": "hardhat verify --network sepolia",
-    "clean:all": "npm run clean && cd frontend && npm run clean"
+    "clean:all": "npm run clean && cd frontend && npm run clean",
+    // Enhanced scripts for development workflow
+    "test:gas": "cross-env REPORT_GAS=true npm run test",
+    "analyze": "npm run compile && npm run coverage"
   },
   "overrides": {
     "ws@>=7.0.0 <7.5.10": ">=7.5.10",
