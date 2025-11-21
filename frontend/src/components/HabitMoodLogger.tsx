@@ -15,7 +15,7 @@ const HabitMoodLogger = () => {
   const [mood, setMood] = useState([3]);
   const [habitCompletion, setHabitCompletion] = useState([50]);
 
-  const { addDailyRecord, isLoading, message } = useHabitMoodTracker(CONTRACT_ADDRESS);
+  const { addDailyRecord, batchAddDailyRecords, isLoading, message } = useHabitMoodTracker(CONTRACT_ADDRESS);
 
   useEffect(() => {
     if (message) {
