@@ -28,6 +28,7 @@ const config: HardhatUserConfig = {
     currency: "USD",
     enabled: process.env.REPORT_GAS ? true : false,
     excludeContracts: [],
+    // Enhanced gas reporting for FHE operations
   },
   networks: {
     hardhat: {
