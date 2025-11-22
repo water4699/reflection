@@ -28,6 +28,9 @@ contract EncryptedHabitMoodTracker is SepoliaConfig {
     // Event emitted when encrypted analysis is performed
     event AnalysisPerformed(address indexed user, uint256 analysisType);
 
+    // Additional events for enhanced tracking
+    event BatchRecordsAdded(address indexed user, uint256 recordCount, uint256 startDayIndex);
+
     /// @notice Add a daily mood and habit completion record
     /// @param encryptedMood The encrypted mood value (1-5)
     /// @param encryptedHabitCompletion The encrypted habit completion rate (0-100)
