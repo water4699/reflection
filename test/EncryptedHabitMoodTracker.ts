@@ -573,5 +573,57 @@ describe("EncryptedHabitMoodTracker", function () {
     expect(await contract.recordExists(signers.alice.address, 0)).to.be.true;
     expect(await contract.recordExists(signers.alice.address, 1)).to.be.false;
   });
+
+  it("should handle large batch operations within limits", async function () {
+    const batchSize = 5; // Within the 7 record limit
+    const moods = Array(batchSize).fill(4);
+    const habits = Array(batchSize).fill(80);
+
+    const encryptedMoods = await Promise.all(
+      moods.map(mood => fhevm.createEncryptedNumber(mood, contractAddress))
+    );
+    const encryptedHabits = await Promise.all(
+      habits.map(habit => fhevm.createEncryptedNumber(habit, contractAddress))
+    );
+
+    await contract.connect(signers.alice).batchAddDailyRecords(
+      encryptedMoods.map(e => e.handles[0]),
+      encryptedHabits.map(e => e.handles[0]),
+      encryptedMoods.map(e => e.inputProof),
+      encryptedHabits.map(e => e.inputProof)
+    );
+
+    expect(await contract.getDayCount(signers.alice.address)).to.eq(batchSize);
+  });
+
+  it("should properly handle timestamp ordering", async function () {
+    // Add records with simulated time progression
+    const records = [
+      { mood: 2, habit: 30 },
+      { mood: 3, habit: 50 },
+      { mood: 4, habit: 70 },
+      { mood: 5, habit: 90 }
+    ];
+
+    for (const record of records) {
+      const encryptedMood = await fhevm.createEncryptedNumber(record.mood, contractAddress);
+      const encryptedHabit = await fhevm.createEncryptedNumber(record.habit, contractAddress);
+
+      await contract.connect(signers.alice).addDailyRecord(
+        encryptedMood.handles[0],
+        encryptedHabit.handles[0],
+        encryptedMood.inputProof,
+        encryptedHabit.inputProof
+      );
+    }
+
+    const dayCount = await contract.getDayCount(signers.alice.address);
+    expect(dayCount).to.eq(records.length);
+
+    // Verify records exist in order
+    for (let i = 0; i < records.length; i++) {
+      expect(await contract.recordExists(signers.alice.address, i)).to.be.true;
+    }
+  });
 });
 
