@@ -625,5 +625,57 @@ describe("EncryptedHabitMoodTracker", function () {
       expect(await contract.recordExists(signers.alice.address, i)).to.be.true;
     }
   });
+
+  it("should properly handle analysis with insufficient data", async function () {
+    // Add only one record
+    const mood = 3;
+    const habit = 60;
+    const encryptedMood = await fhevm.createEncryptedNumber(mood, contractAddress);
+    const encryptedHabit = await fhevm.createEncryptedNumber(habit, contractAddress);
+
+    await contract.connect(signers.alice).addDailyRecord(
+      encryptedMood.handles[0],
+      encryptedHabit.handles[0],
+      encryptedMood.inputProof,
+      encryptedHabit.inputProof
+    );
+
+    // Should revert correlation analysis with insufficient data
+    await expect(
+      contract.getMoodHabitCorrelation(signers.alice.address, 5)
+    ).to.be.revertedWith("No records available");
+
+    // Should revert trend analysis with insufficient data
+    await expect(
+      contract.getHabitCompletionTrend(signers.alice.address, 5)
+    ).to.be.revertedWith("Need at least 2 records for trend analysis");
+  });
+
+  it("should validate analysis parameters correctly", async function () {
+    // Add multiple records for valid analysis
+    for (let i = 0; i < 3; i++) {
+      const mood = 3 + i;
+      const habit = 50 + i * 10;
+      const encryptedMood = await fhevm.createEncryptedNumber(mood, contractAddress);
+      const encryptedHabit = await fhevm.createEncryptedNumber(habit, contractAddress);
+
+      await contract.connect(signers.alice).addDailyRecord(
+        encryptedMood.handles[0],
+        encryptedHabit.handles[0],
+        encryptedMood.inputProof,
+        encryptedHabit.inputProof
+      );
+    }
+
+    // Test correlation analysis
+    await expect(contract.getMoodHabitCorrelation(signers.alice.address, 5))
+      .to.emit(contract, "AnalysisPerformed")
+      .withArgs(signers.alice.address, 2);
+
+    // Test trend analysis
+    await expect(contract.getHabitCompletionTrend(signers.alice.address, 5))
+      .to.emit(contract, "AnalysisPerformed")
+      .withArgs(signers.alice.address, 5);
+  });
 });
 
