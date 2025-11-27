@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "postinstall": "chmod +x node_modules/.bin/vite"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
