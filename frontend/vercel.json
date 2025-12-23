@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm ci --ignore-scripts",
+  "devCommand": "npm run dev",
+  "framework": null,
+  "env": {
+    "NODE_ENV": "production",
+    "CI": "true"
+  },
+  "regions": ["iad1"],
+  "functions": {},
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
