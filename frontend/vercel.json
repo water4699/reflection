@@ -10,7 +10,6 @@
     "CI": "true"
   },
   "regions": ["iad1"],
-  "functions": {},
   "rewrites": [
     {
       "source": "/(.*)",
