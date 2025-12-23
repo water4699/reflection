@@ -1,0 +1,69 @@
+[33mcommit 797780100722ec413e14d24277b1bf89aea09b49[m
+Author: RoseJudd <amzhp4790@outlook.com>
+Date:   Thu Nov 20 09:15:00 2025 -0800
+
+    feat: add encrypted habit and mood tracker smart contract
+    
+    - Implement core FHE-based habit and mood tracking functionality
+    - Add encrypted data storage with user permission management
+    - Include basic analysis functions for mood and habit patterns
+
+.gitignore
+CONTRIBUTING.md
+DEPLOYMENT.md
+README.md
+config.example.json
+contracts/EncryptedHabitMoodTracker.sol
+deploy/001_deploy_EncryptedHabitMoodTracker.ts
+docs/environment-setup.md
+frontend/README.md
+frontend/components.json
+frontend/index.html
+frontend/package-lock.json
+frontend/package.json
+frontend/postcss.config.js
+frontend/public/favicon.svg
+frontend/src/App.tsx
+frontend/src/components/HabitMoodAnalysis.tsx
+frontend/src/components/HabitMoodLogger.tsx
+frontend/src/components/HabitMoodViewer.tsx
+frontend/src/components/Logo.tsx
+frontend/src/components/WalletConnect.tsx
+frontend/src/components/ui/button.tsx
+frontend/src/components/ui/card.tsx
+frontend/src/components/ui/input.tsx
+frontend/src/components/ui/slider.tsx
+frontend/src/components/ui/sonner.tsx
+frontend/src/components/ui/toast.tsx
+frontend/src/components/ui/toaster.tsx
+frontend/src/components/ui/tooltip.tsx
+frontend/src/fhevm/GenericStringStorage.ts
+frontend/src/fhevm/PublicKeyStorage.ts
+frontend/src/fhevm/RelayerSDKLoader.ts
+frontend/src/fhevm/constants.ts
+frontend/src/fhevm/internal/fhevm.ts
+frontend/src/fhevm/internal/mock/fhevmMock.ts
+frontend/src/fhevm/useFhevm.tsx
+frontend/src/hooks/use-toast.ts
+frontend/src/hooks/useHabitMoodTracker.tsx
+frontend/src/hooks/useInMemoryStorage.tsx
+frontend/src/index.css
+frontend/src/lib/utils.ts
+frontend/src/lib/wagmi.ts
+frontend/src/main.tsx
+frontend/src/pages/Index.tsx
+frontend/src/pages/NotFound.tsx
+frontend/tailwind.config.ts
+frontend/tsconfig.app.json
+frontend/tsconfig.json
+frontend/tsconfig.node.json
+frontend/vite.config.ts
+hardhat.config.ts
+package.json
+reflection.mp4
+scripts/check-deployment.js
+scripts/setup-dev.js
+scripts/verify-contract.js
+test/EncryptedHabitMoodTracker.ts
+test/EncryptedHabitMoodTrackerSepolia.ts
+tsconfig.json

@@ -23,11 +23,27 @@ const queryClient = new QueryClient({
 const App = () => (
   <WagmiProvider config={config}>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-        </Routes>
-      </BrowserRouter>
+      <RainbowKitProvider
+        theme={darkTheme({
+          accentColor: 'hsl(195, 100%, 50%)',
+          accentColorForeground: 'hsl(210, 100%, 10%)',
+          borderRadius: 'medium',
+        })}
+        locale="en"
+      >
+        <InMemoryStorageProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </InMemoryStorageProvider>
+      </RainbowKitProvider>
     </QueryClientProvider>
   </WagmiProvider>
 );

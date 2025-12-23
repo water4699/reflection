@@ -82,3 +82,33 @@ async function checkDeployment(networkName = "localhost") {
 // Check command line arguments
 const network = process.argv[2] || "localhost";
 checkDeployment(network);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

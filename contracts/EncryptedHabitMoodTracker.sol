@@ -167,33 +167,33 @@ contract EncryptedHabitMoodTracker is SepoliaConfig {
     {
         uint256 dayCount = _userDayCount[user];
         require(dayCount > 0, "No records available");
-
+        
         // Limit to avoid gas issues - process up to 10 records
         uint256 maxRecords = recordCount > 10 ? 10 : recordCount;
         uint256 startIndex = dayCount > maxRecords ? dayCount - maxRecords : 0;
-
+        
         euint32 moodHabitProduct = FHE.asEuint32(0);
         euint32 habitSquared = FHE.asEuint32(0);
-
+        
         // Calculate products for correlation analysis
         for (uint256 i = startIndex; i < dayCount; i++) {
             if (_userRecords[user][i].initialized) {
                 // mood * habitCompletion
                 euint32 product = FHE.mul(_userRecords[user][i].mood, _userRecords[user][i].habitCompletion);
                 moodHabitProduct = FHE.add(moodHabitProduct, product);
-
+                
                 // habitCompletion^2
                 euint32 squared = FHE.mul(_userRecords[user][i].habitCompletion, _userRecords[user][i].habitCompletion);
                 habitSquared = FHE.add(habitSquared, squared);
             }
         }
-
+        
         // Grant permissions for decryption
         FHE.allowThis(moodHabitProduct);
         FHE.allow(moodHabitProduct, user);
         FHE.allowThis(habitSquared);
         FHE.allow(habitSquared, user);
-
+        
         emit AnalysisPerformed(user, 2);
         return (moodHabitProduct, habitSquared);
     }
@@ -211,19 +211,19 @@ contract EncryptedHabitMoodTracker is SepoliaConfig {
     {
         uint256 dayCount = _userDayCount[user];
         require(dayCount > 0, "No records available");
-
+        
         // Need at least 2 records to compare
         require(dayCount >= 2, "Need at least 2 records for trend analysis");
-
+        
         // Limit to avoid gas issues - process up to 10 records
         uint256 maxRecords = recordCount > 10 ? 10 : recordCount;
         uint256 splitPoint = dayCount > maxRecords ? dayCount - (maxRecords / 2) : dayCount / 2;
-
+        
         euint32 recentMoodSum = FHE.asEuint32(0);
         euint32 earlierMoodSum = FHE.asEuint32(0);
         uint256 recentCount = 0;
         uint256 earlierCount = 0;
-
+        
         // Calculate sums for recent and earlier periods
         for (uint256 i = 0; i < dayCount; i++) {
             if (_userRecords[user][i].initialized) {
@@ -238,14 +238,14 @@ contract EncryptedHabitMoodTracker is SepoliaConfig {
                 }
             }
         }
-
+        
         // For MVP, we return sums - client can divide by count to get averages
         // Grant permissions for decryption
         FHE.allowThis(recentMoodSum);
         FHE.allow(recentMoodSum, user);
         FHE.allowThis(earlierMoodSum);
         FHE.allow(earlierMoodSum, user);
-
+        
         emit AnalysisPerformed(user, 3);
         return (recentMoodSum, earlierMoodSum);
     }
@@ -278,19 +278,18 @@ contract EncryptedHabitMoodTracker is SepoliaConfig {
 
     /// @notice Get average mood and habit completion over a period
     /// @param user The user address
-    /// @param days The number of recent days to average (max 30)
+    /// @param numDays The number of recent days to average (max 30)
     /// @return encryptedAverageMood Average mood value
     /// @return encryptedAverageHabits Average habit completion
-    function getDailyAverages(address user, uint256 days)
+    function getDailyAverages(address user, uint256 numDays)
         external
         returns (euint32 encryptedAverageMood, euint32 encryptedAverageHabits)
     {
         uint256 dayCount = _userDayCount[user];
         require(dayCount > 0, "No records available");
 
-        uint256 maxDays = days > 30 ? 30 : days;
+        uint256 maxDays = numDays > 30 ? 30 : numDays;
         uint256 startIndex = dayCount > maxDays ? dayCount - maxDays : 0;
-        uint256 recordCount = dayCount - startIndex;
 
         euint32 totalMood = FHE.asEuint32(0);
         euint32 totalHabits = FHE.asEuint32(0);
@@ -353,8 +352,6 @@ contract EncryptedHabitMoodTracker is SepoliaConfig {
             return (0, 0, 0, 0);
         }
 
-        uint256 totalMood = 0;
-        uint256 totalHabit = 0;
         uint256 validRecords = 0;
 
         // Calculate averages
@@ -395,32 +392,41 @@ contract EncryptedHabitMoodTracker is SepoliaConfig {
         uint256 validRecords = 0;
 
         euint32 totalCompletion = FHE.asEuint32(0);
-        euint32 weightedSum = FHE.asEuint32(0);
+        euint32 firstHalfSum = FHE.asEuint32(0);
+        euint32 secondHalfSum = FHE.asEuint32(0);
+        uint256 firstHalfCount = 0;
+        uint256 secondHalfCount = 0;
+        uint256 midpoint = startIndex + (dayCount - startIndex) / 2;
 
-        // Calculate weighted sum for trend (earlier records have lower weight)
+        // Calculate sums for first and second half to determine trend
         for (uint256 i = startIndex; i < dayCount; i++) {
             if (_userRecords[user][i].initialized) {
-                uint256 weight = i - startIndex + 1; // Weight increases with recency
-                euint32 weightedCompletion = FHE.mul(_userRecords[user][i].habitCompletion, FHE.asEuint32(weight));
-                weightedSum = FHE.add(weightedSum, weightedCompletion);
                 totalCompletion = FHE.add(totalCompletion, _userRecords[user][i].habitCompletion);
+                if (i < midpoint) {
+                    firstHalfSum = FHE.add(firstHalfSum, _userRecords[user][i].habitCompletion);
+                    firstHalfCount++;
+                } else {
+                    secondHalfSum = FHE.add(secondHalfSum, _userRecords[user][i].habitCompletion);
+                    secondHalfCount++;
+                }
                 validRecords++;
             }
         }
 
         require(validRecords >= 2, "Need at least 2 valid records");
 
-        // Calculate average completion
-        // Note: Division by validRecords would require client-side calculation
+        // Use difference between halves as trend indicator (positive = improving)
+        // Note: Division by counts would require client-side calculation
+        euint32 trendIndicator = FHE.sub(secondHalfSum, firstHalfSum);
 
         // Grant permissions for decryption
-        FHE.allowThis(weightedSum);
-        FHE.allow(weightedSum, user);
+        FHE.allowThis(trendIndicator);
+        FHE.allow(trendIndicator, user);
         FHE.allowThis(totalCompletion);
         FHE.allow(totalCompletion, user);
 
         emit AnalysisPerformed(user, 5);
-        return (weightedSum, totalCompletion);
+        return (trendIndicator, totalCompletion);
     }
 
     /// @notice Get records within a date range

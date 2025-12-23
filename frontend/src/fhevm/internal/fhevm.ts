@@ -25,7 +25,7 @@ const isFhevmInitialized = (): boolean => {
   if (!isFhevmWindowType(window, console.log)) {
     return false;
   }
-  return window.relayerSDK.__initialized__ === true;
+  return window.relayerSDK?.__initialized__ === true;
 };
 
 const fhevmLoadSDK = async (): Promise<void> => {

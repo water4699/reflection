@@ -3,6 +3,7 @@ import { useAccount, useChainId, useWalletClient } from "wagmi";
 import { ethers } from "ethers";
 import { useFhevm } from "@/fhevm/useFhevm";
 import { useInMemoryStorage } from "./useInMemoryStorage";
+import { useDecryptionCache } from "./useDecryptionCache";
 import { FhevmType } from "@fhevm/hardhat-plugin";
 
 // Contract ABI - will be replaced with generated types after compilation
@@ -57,6 +58,8 @@ interface UseHabitMoodTrackerState {
   runDailyAverages: (days: number) => Promise<void>;
   decryptRecord: (dayIndex: number) => Promise<void>;
   runAnalysis: (recordCount: number) => Promise<void>;
+  clearDecryptionCache: () => void;
+  getCacheStats: () => { totalRecords: number; expiredRecords: number };
 }
 
 export function useHabitMoodTracker(contractAddress: string | undefined): UseHabitMoodTrackerState {
@@ -64,6 +67,13 @@ export function useHabitMoodTracker(contractAddress: string | undefined): UseHab
   const chainId = useChainId();
   const { data: walletClient } = useWalletClient();
   const { storage: fhevmDecryptionSignatureStorage } = useInMemoryStorage();
+  const {
+    storeDecryption,
+    getCachedDecryption,
+    isDecrypted,
+    clearUserCache,
+    getCacheStats
+  } = useDecryptionCache();
 
   // Enhanced validation for contract address and wallet connection
 
@@ -288,8 +298,9 @@ export function useHabitMoodTracker(contractAddress: string | undefined): UseHab
 
     try {
       setIsLoading(true);
+      setMessage("Loading records...");
       const contract = new ethers.Contract(contractAddress, EncryptedHabitMoodTrackerABI, ethersProvider);
-      
+
       const count = await contract.getDayCount(address);
       setDayCount(Number(count));
 
@@ -300,11 +311,14 @@ export function useHabitMoodTracker(contractAddress: string | undefined): UseHab
           const timestamp = await contract.getRecordTimestamp(address, i);
           const encryptedMood = await contract.getEncryptedMood(address, i);
           const encryptedHabit = await contract.getEncryptedHabitCompletion(address, i);
-          
+
+          // Check if decrypted data exists in cache
+          const cachedData = getCachedDecryption(i);
+
           loadedRecords.push({
             dayIndex: i,
-            mood: null,
-            habitCompletion: null,
+            mood: cachedData?.mood ?? null,
+            habitCompletion: cachedData?.habitCompletion ?? null,
             timestamp: Number(timestamp),
             encryptedMood: typeof encryptedMood === "string" ? encryptedMood : ethers.hexlify(encryptedMood),
             encryptedHabitCompletion: typeof encryptedHabit === "string" ? encryptedHabit : ethers.hexlify(encryptedHabit),
@@ -313,13 +327,14 @@ export function useHabitMoodTracker(contractAddress: string | undefined): UseHab
       }
 
       setRecords(loadedRecords);
+      setMessage(`Loaded ${loadedRecords.length} records`);
     } catch (error: any) {
       console.error("[useHabitMoodTracker] Error loading records:", error);
       setMessage(`Error loading records: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
-  }, [contractAddress, ethersProvider, address]);
+  }, [contractAddress, ethersProvider, address, getCachedDecryption, storeDecryption]);
 
   const decryptRecord = useCallback(
     async (dayIndex: number) => {
@@ -418,21 +433,24 @@ export function useHabitMoodTracker(contractAddress: string | undefined): UseHab
         const decryptedMood = Number(decryptedResult[moodHandle] || 0);
         const decryptedHabit = Number(decryptedResult[habitHandle] || 0);
 
+        // Store decryption result to cache
+        storeDecryption(dayIndex, decryptedMood, decryptedHabit);
+
         // Update records with decrypted values
-        setRecords(prev => prev.map(record => 
-          record.dayIndex === dayIndex 
+        setRecords(prev => prev.map(record =>
+          record.dayIndex === dayIndex
             ? { ...record, mood: decryptedMood, habitCompletion: decryptedHabit }
             : record
         ));
 
-        setMessage("Record decrypted successfully!");
+        setMessage("Record decrypted and cached successfully!");
       } catch (error: any) {
         console.error("[useHabitMoodTracker] Error decrypting record:", error);
         setMessage(`Decryption error: ${error.message}`);
         throw error;
       }
     },
-    [contractAddress, ethersProvider, fhevmInstance, ethersSigner, address, chainId]
+    [contractAddress, ethersProvider, fhevmInstance, ethersSigner, address, chainId, storeDecryption]
   );
 
   const runAnalysis = useCallback(
@@ -605,6 +623,8 @@ export function useHabitMoodTracker(contractAddress: string | undefined): UseHab
     loadRecords,
     decryptRecord,
     runAnalysis,
+    clearDecryptionCache: clearUserCache,
+    getCacheStats,
   };
 }
 

@@ -1,10 +1,10 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
-import { hardhat, sepolia } from 'wagmi/chains';
+import { hardhat, sepolia, mainnet } from 'wagmi/chains';
 
 export const config = getDefaultConfig({
-  appName: 'Reflection Log',
-  projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'YOUR_PROJECT_ID',
-  chains: [hardhat, sepolia],
+  appName: 'Encrypted Reflection Log',
+  projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'demo-project-id',
+  chains: [mainnet, sepolia, hardhat],
   ssr: false,
 });
 

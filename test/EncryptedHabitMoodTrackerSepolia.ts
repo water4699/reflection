@@ -43,7 +43,7 @@ describe("EncryptedHabitMoodTrackerSepolia", function () {
     steps = 0;
   });
 
-  it("should add and retrieve a daily record on Sepolia", async function () {
+  it("should add and retrieve a daily record on Sepolia with enhanced analysis", async function () {
     steps = 12;
 
     this.timeout(4 * 40000);
@@ -103,6 +103,56 @@ describe("EncryptedHabitMoodTrackerSepolia", function () {
     );
     progress(`Decrypted habit completion: ${decryptedHabit}%`);
     expect(decryptedHabit).to.eq(habitCompletion);
+  });
+
+  it("should perform encrypted analysis operations on Sepolia", async function () {
+    steps = 8;
+
+    this.timeout(4 * 40000);
+
+    // First add a few records
+    for (let i = 0; i < 3; i++) {
+      const mood = 3 + i; // 3, 4, 5
+      const habit = 70 + i * 10; // 70, 80, 90
+
+      progress(`Adding record ${i + 1}/3...`);
+      const encryptedMood = await fhevm
+        .createEncryptedInput(contractAddress, signers.alice.address)
+        .add32(mood)
+        .encrypt();
+
+      const encryptedHabit = await fhevm
+        .createEncryptedInput(contractAddress, signers.alice.address)
+        .add32(habit)
+        .encrypt();
+
+      await contract
+        .connect(signers.alice)
+        .addDailyRecord(
+          encryptedMood.handles[0],
+          encryptedHabit.handles[0],
+          encryptedMood.inputProof,
+          encryptedHabit.inputProof
+        );
+    }
+
+    progress("Running analysis totals...");
+    const [encryptedTotalMood, encryptedTotalHabits] = await contract
+      .connect(signers.alice)
+      .getAnalysisTotals(signers.alice.address, 10);
+
+    expect(encryptedTotalMood).to.not.be.undefined;
+    expect(encryptedTotalHabits).to.not.be.undefined;
+
+    progress("Running daily averages...");
+    const [encryptedAvgMood, encryptedAvgHabits] = await contract
+      .connect(signers.alice)
+      .getDailyAverages(signers.alice.address, 7);
+
+    expect(encryptedAvgMood).to.not.be.undefined;
+    expect(encryptedAvgHabits).to.not.be.undefined;
+
+    progress("Analysis operations completed successfully");
   });
 });
 

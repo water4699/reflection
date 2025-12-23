@@ -68,7 +68,6 @@
     "lint:sol": "solhint --max-warnings 0 \"contracts/**/*.sol\"",
     "lint:ts": "eslint --ignore-path ./.eslintignore --ext .js,.ts .",
     "postcompile": "npm run typechain",
-    "postinstall": "chmod +x node_modules/.bin/vite",
     "prettier:check": "prettier --check \"**/*.{js,json,md,sol,ts,yml}\"",
     "prettier:write": "prettier --write \"**/*.{js,json,md,sol,ts,yml}\"",
     "test": "hardhat test",
@@ -82,7 +81,6 @@
     "deploy:sepolia": "hardhat deploy --network sepolia",
     "verify:sepolia": "hardhat verify --network sepolia",
     "clean:all": "npm run clean && cd frontend && npm run clean",
-    // Enhanced scripts for development workflow
     "test:gas": "cross-env REPORT_GAS=true npm run test",
     "analyze": "npm run compile && npm run coverage"
   },
